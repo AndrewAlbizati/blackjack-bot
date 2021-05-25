@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="sdcf4j">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/dependencies/sdcf4j.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
