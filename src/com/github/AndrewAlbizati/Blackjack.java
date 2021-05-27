@@ -10,6 +10,7 @@ import org.javacord.api.entity.server.Server;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -26,7 +27,19 @@ public class Blackjack implements CommandExecutor {
 
     @Command(aliases = {"!blackjack", "!bj"}, async = true, description = "Plays a game of Blackjack.")
     public void onCommand(Server server, TextChannel channel, Message message) throws IOException {
+        if (message.getContent().split(" ").length != 2) {
+            return;
+        }
+
+        if (!isInt(message.getContent().split(" ")[1])) {
+            return;
+        }
+
+        int bet = Integer.parseInt(message.getContent().split(" ")[1]);
+
+
         try {
+            // Initialize the game
             Deck deck = new Deck(52);
             deck.shuffleDeck();
             Deck[] hands = deck.deal(2, 2);
@@ -35,14 +48,23 @@ public class Blackjack implements CommandExecutor {
             EmbedBuilder eb = new EmbedBuilder().setTitle("Blackjack")
                     .setDescription("**Commands**" +
                             "\nType **\"hit\"** to hit" +
-                            "\nType **\"stand\"** to stand");
+                            "\nType **\"stand\"** to stand" +
+                            "\nYour bet: **" + bet + "**")
+                    .setThumbnail("https://cdn.discordapp.com/attachments/810716354977726504/847610923023597568/counting-cards-black-jack.png")
+                    .setColor(new Color(155, 89, 182));
             eb.addField("Dealer", cardToString(dealerHand.get(0)));
 
 
-            String title = "Your Hand (" + calculateScore(playerHand).toString().replaceAll("\\[", "").replaceAll("\\]", "") + ")";
+            String title = "Your Hand (" + getScore(playerHand) + ")";
             eb.addField(title, cardsToString(playerHand));
             Message embedMessage = channel.sendMessage(eb).join();
 
+            if (getScore(playerHand) == 21 && getScore(dealerHand) != 21) {
+                channel.sendMessage("Blackjack!");
+                return;
+            }
+
+            // Message listener for hit/stand
             AtomicBoolean roundFinished = new AtomicBoolean(false);
             Bot.getApi().addMessageCreateListener(messageCreateEvent -> {
                 if (roundFinished.get()) {
@@ -55,11 +77,11 @@ public class Blackjack implements CommandExecutor {
                     EmbedBuilder embedBuilder = embedMessage.getEmbeds().get(0).toBuilder();
                     embedBuilder.removeAllFields();
                     embedBuilder.addField("Dealer", cardToString(dealerHand.get(0)));
-                    String title2 = "Your Hand (" + calculateScore(playerHand).toString().replaceAll("\\[", "").replaceAll("\\]", "") + ")";
+                    String title2 = "Your Hand (" + getScore(playerHand) + ")";
                     embedBuilder.addField(title2, cardsToString(playerHand));
-                    embedMessage.edit(embedBuilder);
+                    embedMessage.edit(embedBuilder).join();
 
-                    if (calculateScore(playerHand).get(0) >= 21) {
+                    if (getScore(playerHand) >= 21) {
                         roundFinished.set(true);
                     }
                 } else if (m.getReadableContent().equalsIgnoreCase("stand")) {
@@ -69,39 +91,62 @@ public class Blackjack implements CommandExecutor {
                 roundFinished.set(true);
             });
 
+            // Wait until the player is finished
             while (!roundFinished.get()) {
                 Thread.sleep(100);
             }
 
-            boolean temp = false;
-            for (Integer i : calculateScore(playerHand)) {
-                if (i > 21) {
-                    temp = true;
-                    continue;
-                }
-                temp = false;
-                break;
-            }
+            // Show dealer's hand
+            EmbedBuilder embedBuilder = embedMessage.getEmbeds().get(0).toBuilder();
+            embedBuilder.removeAllFields();
+            embedBuilder.addField("Dealer (" + getScore(dealerHand) + ")", cardsToString(dealerHand));
+            title = "Your Hand (" + getScore(playerHand) + ")";
+            embedBuilder.addField(title, cardsToString(playerHand));
+            embedMessage.edit(embedBuilder).join();
 
             // Player busts
-            if (temp) {
+            if (getScore(playerHand) > 21) {
                 channel.sendMessage("You busted!");
                 return;
             }
 
-            if (calculateScore(dealerHand).size() == 1) {
-                while (calculateScore(dealerHand).get(0) < 17) {
-                    dealerHand.add(deck.getRandomCard());
-                    EmbedBuilder embedBuilder = embedMessage.getEmbeds().get(0).toBuilder();
-                    embedBuilder.removeAllFields();
-                    embedBuilder.addField("Dealer (" + calculateScore(dealerHand).toString().replaceAll("\\[", "").replaceAll("\\]", "") + ")", cardsToString(dealerHand));
-                    String title2 = "Your Hand (" + calculateScore(playerHand).toString().replaceAll("\\[", "").replaceAll("\\]", "") + ")";
-                    embedBuilder.addField(title2, cardsToString(playerHand));
-                    embedMessage.edit(embedBuilder);
-                }
+            // Dealer hits until they get 17
+            while (getScore(dealerHand) < 17) {
+                dealerHand.add(deck.getRandomCard());
+                embedBuilder = embedMessage.getEmbeds().get(0).toBuilder();
+                embedBuilder.removeAllFields();
+                embedBuilder.addField("Dealer (" + getScore(dealerHand) + ")", cardsToString(dealerHand));
+                title = "Your Hand (" + getScore(playerHand) + ")";
+                embedBuilder.addField(title, cardsToString(playerHand));
+                embedMessage.edit(embedBuilder).join();
+                Thread.sleep(500);
+            }
+
+            // Dealer busts
+            if (getScore(dealerHand) > 21) {
+                channel.sendMessage("Dealer busted!");
+                return;
+            }
+
+            // Determine winner
+            if (getScore(dealerHand) > getScore(playerHand)) {
+                channel.sendMessage("Dealer wins!");
+            } else if (getScore(playerHand) > getScore(dealerHand)) {
+                channel.sendMessage("Player wins!");
+            } else {
+                channel.sendMessage("Tie!");
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private static boolean isInt(String s) {
+        try {
+            int i = Integer.parseInt(s);
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 
@@ -117,7 +162,6 @@ public class Blackjack implements CommandExecutor {
     private static String cardToString(Card c) {
         return emojiHashMap.get(c.getId()).getMentionTag() + " " + c.getName();
     }
-
 
     private static HashMap<String, KnownCustomEmoji> getEmojisMap() {
         try {
@@ -181,6 +225,45 @@ public class Blackjack implements CommandExecutor {
         if (score.contains(21)) {
             score.clear();
             score.add(21);
+        }
+
+        return score;
+    }
+
+    public static int getScore(Deck d) {
+        int score = 0;
+
+        Deck d2 = new Deck();
+        for (Card c : d) {
+            d2.add(c);
+        }
+
+        d2.sortDeck();
+        d2.reverseDeck();
+
+        for (Card c : d2) {
+            switch (c.getValue()) {
+                case 1:
+                    if (score + 11 <= 21) {
+                        score += 11;
+                        break;
+                    }
+
+                    score += 1;
+                    break;
+
+                case 11:
+
+                case 12:
+
+                case 13:
+                    score += 10;
+                    break;
+
+                default:
+                    score += c.getValue();
+                    break;
+            }
         }
 
         return score;
