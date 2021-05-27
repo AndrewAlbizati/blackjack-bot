@@ -15,32 +15,109 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Blackjack implements CommandExecutor {
-    private HashMap<String, KnownCustomEmoji> emojiHashMap = getEmojisMap();
+    private static HashMap<String, KnownCustomEmoji> emojiHashMap = getEmojisMap();
     public Blackjack() {
 
     }
 
     @Command(aliases = {"!blackjack", "!bj"}, async = true, description = "Plays a game of Blackjack.")
     public void onCommand(Server server, TextChannel channel, Message message) throws IOException {
-        Deck deck = new Deck(52);
-        deck.shuffleDeck();
-        Deck[] hands = deck.deal(2, 2);
-        Deck dealerHand = hands[0];
-        Deck player1Hand = hands[1];
-        EmbedBuilder eb = new EmbedBuilder().setTitle("Blackjack");
-        eb.addField("Dealer", emojiHashMap.get(dealerHand.get(0).getId()).getMentionTag());
+        try {
+            Deck deck = new Deck(52);
+            deck.shuffleDeck();
+            Deck[] hands = deck.deal(2, 2);
+            Deck dealerHand = hands[0];
+            Deck playerHand = hands[1];
+            EmbedBuilder eb = new EmbedBuilder().setTitle("Blackjack")
+                    .setDescription("**Commands**" +
+                            "\nType **\"hit\"** to hit" +
+                            "\nType **\"stand\"** to stand");
+            eb.addField("Dealer", cardToString(dealerHand.get(0)));
 
-        StringBuilder handEmojis = new StringBuilder();
-        for (Card c : player1Hand) {
-            handEmojis.append(emojiHashMap.get(c.getId()).getMentionTag());
+
+            String title = "Your Hand (" + calculateScore(playerHand).toString().replaceAll("\\[", "").replaceAll("\\]", "") + ")";
+            eb.addField(title, cardsToString(playerHand));
+            Message embedMessage = channel.sendMessage(eb).join();
+
+            AtomicBoolean roundFinished = new AtomicBoolean(false);
+            Bot.getApi().addMessageCreateListener(messageCreateEvent -> {
+                if (roundFinished.get()) {
+                    return;
+                }
+
+                Message m = messageCreateEvent.getMessage();
+                if (m.getReadableContent().equalsIgnoreCase("hit")) {
+                    playerHand.add(deck.getRandomCard());
+                    EmbedBuilder embedBuilder = embedMessage.getEmbeds().get(0).toBuilder();
+                    embedBuilder.removeAllFields();
+                    embedBuilder.addField("Dealer", cardToString(dealerHand.get(0)));
+                    String title2 = "Your Hand (" + calculateScore(playerHand).toString().replaceAll("\\[", "").replaceAll("\\]", "") + ")";
+                    embedBuilder.addField(title2, cardsToString(playerHand));
+                    embedMessage.edit(embedBuilder);
+
+                    if (calculateScore(playerHand).get(0) >= 21) {
+                        roundFinished.set(true);
+                    }
+                } else if (m.getReadableContent().equalsIgnoreCase("stand")) {
+                    roundFinished.set(true);
+                }
+            }).removeAfter(2, TimeUnit.MINUTES).addRemoveHandler(() -> {
+                roundFinished.set(true);
+            });
+
+            while (!roundFinished.get()) {
+                Thread.sleep(100);
+            }
+
+            boolean temp = false;
+            for (Integer i : calculateScore(playerHand)) {
+                if (i > 21) {
+                    temp = true;
+                    continue;
+                }
+                temp = false;
+                break;
+            }
+
+            // Player busts
+            if (temp) {
+                channel.sendMessage("You busted!");
+                return;
+            }
+
+            if (calculateScore(dealerHand).size() == 1) {
+                while (calculateScore(dealerHand).get(0) < 17) {
+                    dealerHand.add(deck.getRandomCard());
+                    EmbedBuilder embedBuilder = embedMessage.getEmbeds().get(0).toBuilder();
+                    embedBuilder.removeAllFields();
+                    embedBuilder.addField("Dealer (" + calculateScore(dealerHand).toString().replaceAll("\\[", "").replaceAll("\\]", "") + ")", cardsToString(dealerHand));
+                    String title2 = "Your Hand (" + calculateScore(playerHand).toString().replaceAll("\\[", "").replaceAll("\\]", "") + ")";
+                    embedBuilder.addField(title2, cardsToString(playerHand));
+                    embedMessage.edit(embedBuilder);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static String cardsToString(Deck d) {
+        StringBuilder cards = new StringBuilder();
+        for (Card c : d) {
+            cards.append(emojiHashMap.get(c.getId()).getMentionTag() + " " + c.getName() + "\n");
         }
 
-        String title = "Player 1 (" + calculateScore(player1Hand).toString().replaceAll("\\[", "").replaceAll("\\]", "");
-        eb.addField(title, handEmojis.toString());
-        channel.sendMessage(eb);
+        return cards.toString();
     }
+
+    private static String cardToString(Card c) {
+        return emojiHashMap.get(c.getId()).getMentionTag() + " " + c.getName();
+    }
+
 
     private static HashMap<String, KnownCustomEmoji> getEmojisMap() {
         try {
@@ -66,7 +143,7 @@ public class Blackjack implements CommandExecutor {
     }
 
     public static ArrayList<Integer> calculateScore(Deck d) {
-        d.sortDeckWithSuits();
+        d.sortDeck();
         d.reverseDeck();
         ArrayList<Integer> score = new ArrayList<>();
         int scoreWithoutAce = 0;
@@ -94,10 +171,16 @@ public class Blackjack implements CommandExecutor {
 
                 default:
                     scoreWithoutAce += c.getValue();
+                    break;
             }
         }
         if (score.isEmpty()) {
             score.add(scoreWithoutAce);
+        }
+
+        if (score.contains(21)) {
+            score.clear();
+            score.add(21);
         }
 
         return score;

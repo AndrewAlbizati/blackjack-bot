@@ -49,6 +49,39 @@ public class Deck extends ArrayList<Card> {
         }
     }
 
+    public void sortDeck() {
+        Object[] cards = this.toArray();
+        boolean sorted = false;
+        Card temp;
+
+        while(!sorted) {
+            sorted = true;
+            for (int i = 0; i < cards.length - 1; i++) {
+                Card c = (Card) cards[i];
+                Card nextC = (Card) cards[i + 1];
+                if (compare(c, nextC) == cards[i]) {
+                    temp = c;
+                    cards[i] = cards[i+1];
+                    cards[i+1] = temp;
+                    sorted = false;
+                }
+            }
+        }
+        clear();
+        for (int i = 0; i < cards.length; i++) {
+            add((Card) cards[i]);
+        }
+    }
+
+    private static Card compare(Card c1, Card c2) {
+        if (c1.getValue() > c2.getValue()) {
+            return c1;
+        } else if (c2.getValue() > c1.getValue()) {
+            return c2;
+        }
+        return null;
+    }
+
     public void sortDeckWithSuits() {
         ArrayList<Integer> spades = new ArrayList<>();
         ArrayList<Integer> hearts = new ArrayList<>();
@@ -89,12 +122,17 @@ public class Deck extends ArrayList<Card> {
         }
     }
 
+    public Card getRandomCard() {
+        Card c = remove(new Random().nextInt(size()));
+        return c;
+    }
+
     public void reverseDeck() {
         Collections.reverse(this);
     }
 
     public Deck[] deal(int pCount, int cardsPerP) {
-        Deck[] dealtHands = new Deck[pCount - 1];
+        Deck[] dealtHands = new Deck[pCount];
         if (pCount * cardsPerP > super.size()) {
             return null;
         }
