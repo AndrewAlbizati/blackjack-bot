@@ -59,8 +59,13 @@ public class Blackjack implements CommandExecutor {
             eb.addField(title, cardsToString(playerHand));
             Message embedMessage = channel.sendMessage(eb).join();
 
-            if (getScore(playerHand) == 21 && getScore(dealerHand) != 21) {
-                channel.sendMessage("Blackjack!");
+            if (getScore(playerHand) == 21) {
+                channel.sendMessage("Blackjack! 3/2");
+                return;
+            }
+
+            if (dealerHand.get(0).getValue() == 1 && getScore(dealerHand) == 21) {
+                channel.sendMessage("Dealer has blackjack!");
                 return;
             }
 
@@ -73,7 +78,7 @@ public class Blackjack implements CommandExecutor {
 
                 Message m = messageCreateEvent.getMessage();
                 if (m.getReadableContent().equalsIgnoreCase("hit")) {
-                    playerHand.add(deck.getRandomCard());
+                    playerHand.add(deck.remove(0));
                     EmbedBuilder embedBuilder = embedMessage.getEmbeds().get(0).toBuilder();
                     embedBuilder.removeAllFields();
                     embedBuilder.addField("Dealer", cardToString(dealerHand.get(0)));
@@ -112,14 +117,14 @@ public class Blackjack implements CommandExecutor {
 
             // Dealer hits until they get 17
             while (getScore(dealerHand) < 17) {
-                dealerHand.add(deck.getRandomCard());
+                dealerHand.add(deck.remove(0));
                 embedBuilder = embedMessage.getEmbeds().get(0).toBuilder();
                 embedBuilder.removeAllFields();
                 embedBuilder.addField("Dealer (" + getScore(dealerHand) + ")", cardsToString(dealerHand));
                 title = "Your Hand (" + getScore(playerHand) + ")";
                 embedBuilder.addField(title, cardsToString(playerHand));
                 embedMessage.edit(embedBuilder).join();
-                Thread.sleep(500);
+                Thread.sleep(1000);
             }
 
             // Dealer busts
