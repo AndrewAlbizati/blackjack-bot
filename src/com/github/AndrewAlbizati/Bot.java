@@ -25,6 +25,7 @@ public class Bot {
             }
         } catch (IOException e) {
             e.printStackTrace();
+            System.exit(1);
         }
 
         // Request token from the user
@@ -42,10 +43,11 @@ public class Bot {
             // Message listener
             api.addMessageCreateListener(event -> {
                 if (event.getMessageContent().toLowerCase().startsWith(COMMAND_PREFIX + "blackjack") || event.getMessageContent().toLowerCase().startsWith(COMMAND_PREFIX + "bj")) {
-                    Blackjack blackjack = new Blackjack(event, api);
-                    blackjack.start();
+                    StartBlackjack b = new StartBlackjack(event, api);
+                    b.start();
                 }
             });
+            api.addMessageComponentCreateListener(new OnButtonPress(api));
 
         // Bot failed to start
         } catch (Exception e) {
