@@ -1,5 +1,8 @@
-.DS_STORE
-*.idea
-/out
+/out/
+/.idea/
+.gradle
+/build/
 *.iml
+.DS_Store
+token.txt
 bjpoints.json
