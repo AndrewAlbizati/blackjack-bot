@@ -1,8 +1,8 @@
 /out/
 /.idea/
-.gradle
+/.gradle/
 /build/
 *.iml
 .DS_Store
-token.txt
+config.properties
 bjpoints.json

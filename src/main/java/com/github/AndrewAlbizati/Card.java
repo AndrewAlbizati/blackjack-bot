@@ -16,6 +16,11 @@ public class Card {
         this.suit = suit;
     }
 
+    /**
+     * Converts the card class instance into a human-readable name.
+     *
+     * @return The name of the card.
+     */
     public String getName() {
         String num;
 
@@ -40,6 +45,13 @@ public class Card {
         return num + " of " + capitalize(suit.name()) + "s";
     }
 
+    /**
+     * Converts the card class instance into a unique id.
+     * 5 of Spades = 5s
+     * King of Clubs = 13c
+     *
+     * @return The id of the card.
+     */
     public String getId() {
         return value + suit.name().substring(0, 1).toLowerCase();
     }

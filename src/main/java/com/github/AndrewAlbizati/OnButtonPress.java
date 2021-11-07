@@ -13,13 +13,16 @@ import org.javacord.api.event.interaction.MessageComponentCreateEvent;
 import org.javacord.api.interaction.MessageComponentInteraction;
 import org.javacord.api.listener.interaction.MessageComponentCreateListener;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class OnButtonPress implements MessageComponentCreateListener {
     final DiscordApi api;
+
     public OnButtonPress(DiscordApi api) {
         this.api = api;
     }
+
     @Override
     public void onComponentCreate(MessageComponentCreateEvent messageComponentCreateEvent) {
         MessageComponentInteraction messageComponentInteraction = messageComponentCreateEvent.getMessageComponentInteraction();
@@ -34,7 +37,7 @@ public class OnButtonPress implements MessageComponentCreateListener {
         if (message.getEmbeds().size() != 1)
             return;
 
-        // Embed has "Blackjack" as title
+        // Embed doesn't have "Blackjack" as title
         if (!message.getEmbeds().get(0).getTitle().get().equals("Blackjack"))
             return;
 
@@ -62,12 +65,18 @@ public class OnButtonPress implements MessageComponentCreateListener {
         for (String s : fields.get(1).getValue().split("\n"))
             playerHand.add(BlackjackUtils.nameToCard(s));
 
-        Deck cardsInPlay = new Deck(0);
-        cardsInPlay.addAll(dealerHand);
-        cardsInPlay.addAll(playerHand);
+        // Create list of card ids that have been played
+        ArrayList<String> idsInPlay = new ArrayList<>();
+        idsInPlay.add(dealerHand.get(0).getId());
+
+        for (Card c : playerHand) {
+            idsInPlay.add(c.getId());
+        }
 
         boolean endGame = false;
 
+
+        // Handle each of the decisions (dd, hit, stand)
         switch (customId) {
             case "dd":
                 bet *= 2;
@@ -77,9 +86,9 @@ public class OnButtonPress implements MessageComponentCreateListener {
                 Card nextCard; // Generate new card
                 do {
                     nextCard = BlackjackUtils.randomCard();
-                } while (cardsInPlay.contains(nextCard));
+                } while (idsInPlay.contains(nextCard.getId()));
                 playerHand.add(nextCard);
-                cardsInPlay.add(nextCard);
+                idsInPlay.add(nextCard.getId());
 
                 eb.removeAllFields();
                 eb.setDescription("You bet **" + bet + "** point" + (bet != 1 ? "s" : "") + "\n" +
@@ -100,6 +109,7 @@ public class OnButtonPress implements MessageComponentCreateListener {
                     endGame = true;
                 }
 
+                // Resend the embed if the game is still in play
                 if (!endGame) {
                     // Add double down option if the player has enough points
                     if (bet * 2 <= playerPointAmount) {
@@ -130,7 +140,7 @@ public class OnButtonPress implements MessageComponentCreateListener {
                 break;
         }
 
-        // Stop code if the game isn't ending
+        // Stop code if the game hasn't ended
         if (!endGame) {
             return;
         }
@@ -151,14 +161,14 @@ public class OnButtonPress implements MessageComponentCreateListener {
             return;
         }
 
-        // Dealer hits until they get 17
+        // Dealer hits until they get 17+
         while (BlackjackUtils.getScore(dealerHand) < 17) {
             Card nextCard; // Generate a new card to add to dealer hand
             do {
                 nextCard = BlackjackUtils.randomCard();
-            } while (cardsInPlay.contains(nextCard));
+            } while (idsInPlay.contains(nextCard.getId()));
             dealerHand.add(nextCard);
-            cardsInPlay.add(nextCard);
+            idsInPlay.add(nextCard.getId());
 
             // Update message with new card
             eb.removeAllFields();

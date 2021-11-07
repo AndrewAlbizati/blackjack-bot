@@ -8,6 +8,10 @@ public class Deck extends ArrayList<Card> {
         initializeDeck(amountOfDecks);
     }
 
+    /**
+     * Clears the deck and initializes it with new cards.
+     * @param amountOfDecks Number of decks of cards to be put together.
+     */
     public void initializeDeck(int amountOfDecks) {
         clear();
         for (int deck = 0; deck < amountOfDecks; deck++) {
@@ -20,10 +24,16 @@ public class Deck extends ArrayList<Card> {
         }
     }
 
+    /**
+     * Shuffles the entire deck randomly.
+     */
     public void shuffleDeck() {
         Collections.shuffle(this);
     }
 
+    /**
+     * Prints out each of the cards in the deck to the console.
+     */
     public void printDeck() {
         for (int i = 0; i < super.size(); i++) {
             Card c = super.get(i);
@@ -31,6 +41,9 @@ public class Deck extends ArrayList<Card> {
         }
     }
 
+    /**
+     * Sorts the deck based on value, ignoring suits.
+     */
     public void sortDeck() {
         Object[] cards = this.toArray();
         boolean sorted = false;
@@ -64,25 +77,10 @@ public class Deck extends ArrayList<Card> {
         return null;
     }
 
+    /**
+     * Reverses the order of the entire deck.
+     */
     public void reverseDeck() {
         Collections.reverse(this);
-    }
-
-    public Deck[] deal(int pCount, int cardsPerP) {
-        Deck[] dealtHands = new Deck[pCount];
-        if (pCount * cardsPerP > super.size()) {
-            return null;
-        }
-
-        for (int i = 0; i < pCount; i++) {
-            Deck tempDeck = new Deck(0);
-            for (int j = 0; j < cardsPerP; j++) {
-                tempDeck.add(super.get(0));
-                super.remove(0);
-            }
-            dealtHands[i] = tempDeck;
-        }
-
-        return dealtHands;
     }
 }
