@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OnButtonPress implements MessageComponentCreateListener {
-    final DiscordApi api;
+    private final DiscordApi api;
 
     public OnButtonPress(DiscordApi api) {
         this.api = api;
@@ -28,7 +28,7 @@ public class OnButtonPress implements MessageComponentCreateListener {
         MessageComponentInteraction messageComponentInteraction = messageComponentCreateEvent.getMessageComponentInteraction();
         String customId = messageComponentInteraction.getCustomId();
 
-        Message message = messageComponentInteraction.getMessage().get();
+        Message message = messageComponentInteraction.getMessage();
         // Message sent by another bot
         if (!message.getAuthor().getIdAsString().equals(api.getYourself().getIdAsString()))
             return;
@@ -101,7 +101,7 @@ public class OnButtonPress implements MessageComponentCreateListener {
                 eb.addField("Dealer", dealerHand.get(0).getName());
                 eb.addField("Your Hand (" + (BlackjackUtils.isSoft(playerHand) ? "Soft " : "") + BlackjackUtils.getScore(playerHand) + ")", BlackjackUtils.cardsToString(playerHand));
 
-                messageComponentInteraction.getMessage().ifPresent(Message::delete);
+                messageComponentInteraction.getMessage().delete();
 
                 // End game if player busts
                 if (BlackjackUtils.getScore(playerHand) >= 21 || endGame) {
@@ -134,7 +134,7 @@ public class OnButtonPress implements MessageComponentCreateListener {
 
             case "stand":
                 // Remove message components
-                messageComponentInteraction.getMessage().ifPresent(Message::delete);
+                messageComponentInteraction.getMessage().delete();
                 message = channel.sendMessage(eb).join();
                 endGame = true;
                 break;

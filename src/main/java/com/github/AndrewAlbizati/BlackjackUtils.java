@@ -4,7 +4,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -90,9 +89,7 @@ public class BlackjackUtils {
                     break;
 
                 case 11:
-
                 case 12:
-
                 case 13:
                     score += 10;
                     break;
@@ -179,8 +176,7 @@ public class BlackjackUtils {
     public static Card randomCard() {
         Random rand = new Random();
         Suit[] suits = {Suit.SPADE, Suit.DIAMOND, Suit.HEART, Suit.CLUB};
-        Card c = new Card(rand.nextInt(13) + 1, suits[rand.nextInt(suits.length)]);
-        return c;
+        return new Card(rand.nextInt(13) + 1, suits[rand.nextInt(suits.length)]);
     }
 
     /**
@@ -200,7 +196,7 @@ public class BlackjackUtils {
 
             // Add the user to the JSON if they're not already on file
             if (!json.containsKey(id)) {
-                json.put(id, 100); // Player receives 100 points to start with
+                json.put(id, 100L); // Player receives 100 points to start with
             }
 
             return (long) json.get(id);
@@ -228,7 +224,7 @@ public class BlackjackUtils {
 
             // Add the user to the JSON if they're not already on file
             if (!json.containsKey(id)) {
-                json.put(id, 100); // Player receives 100 points to start with
+                json.put(id, 100L); // Player receives 100 points to start with
             }
 
             long userPoints = (long) json.get(id);

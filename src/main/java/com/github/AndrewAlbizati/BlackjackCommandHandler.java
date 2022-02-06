@@ -1,6 +1,5 @@
 package com.github.AndrewAlbizati;
 
-import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.MessageFlag;
 import org.javacord.api.entity.message.component.ActionRow;
 import org.javacord.api.entity.message.component.Button;
@@ -8,16 +7,15 @@ import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import org.javacord.api.interaction.SlashCommandInteraction;
+import org.javacord.api.interaction.callback.InteractionCallbackDataFlag;
 import org.javacord.api.listener.interaction.SlashCommandCreateListener;
 
 import java.awt.*;
 import java.util.ArrayList;
 
 public class BlackjackCommandHandler implements SlashCommandCreateListener {
-    final DiscordApi api;
+    public BlackjackCommandHandler() {
 
-    public BlackjackCommandHandler(DiscordApi api) {
-        this.api = api;
     }
 
     @Override
@@ -30,14 +28,14 @@ public class BlackjackCommandHandler implements SlashCommandCreateListener {
             return;
         }
 
-        long bet = interaction.getFirstOptionIntValue().get().longValue();
+        long bet = interaction.getOptions().get(0).getLongValue().get();
         long playerPointAmount = BlackjackUtils.getPlayerPointAmount(user.getIdAsString());
 
         // Player tried to bet less than one point
         if (bet < 1) {
             interaction.createImmediateResponder()
                     .setContent("You must bet at least one point.")
-                    .setFlags(MessageFlag.EPHEMERAL)
+                    .setFlags(InteractionCallbackDataFlag.EPHEMERAL)
                     .respond();
             return;
         }
@@ -46,7 +44,7 @@ public class BlackjackCommandHandler implements SlashCommandCreateListener {
         if (playerPointAmount < bet) {
             interaction.createImmediateResponder()
                     .setContent("Sorry, you need " + (bet - playerPointAmount) + " more points.")
-                    .setFlags(MessageFlag.EPHEMERAL)
+                    .setFlags(InteractionCallbackDataFlag.EPHEMERAL)
                     .respond();
             return;
         }
