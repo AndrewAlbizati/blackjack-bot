@@ -9,14 +9,14 @@ token={Discord bot token}
 ```
 3. If on Windows:
    1. `gradlew build`
-   2. `move build\libs\among-us-bot-1.0.jar .`
-   3. `java -jar among-us-bot-1.0.jar`
+   2. `move build\libs\blackjackbot-1.0.0.jar .`
+   3. `java -jar blackjackbot-1.0.0.jar`
 
 4. If on macOS/Linux
    1. `chmod +x gradlew`
    2. `./gradlew build`
-   3. `mv build/libs/among-us-bot-1.0.jar .`
-   4. `java -jar among-us-bot-1.0.jar`
+   3. `mv build/libs/blackjackbot-1.0.0.jar .`
+   4. `java -jar blackjackbot-1.0.0.jar`
 
 ## How to Play
 To play Blackjack with the bot, type `/blackjack <bet>` in any channel that the bot is allowed to read and send messages. The bot will give the user basic instructions on how to play.
