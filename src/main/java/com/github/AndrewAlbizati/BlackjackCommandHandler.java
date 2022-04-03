@@ -9,8 +9,15 @@ import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import org.javacord.api.interaction.SlashCommandInteraction;
 import org.javacord.api.interaction.callback.InteractionCallbackDataFlag;
 import org.javacord.api.listener.interaction.SlashCommandCreateListener;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.awt.*;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 
 public class BlackjackCommandHandler implements SlashCommandCreateListener {
@@ -42,8 +49,23 @@ public class BlackjackCommandHandler implements SlashCommandCreateListener {
             return;
         }
 
+        try {
+            String fileName = "bjpoints.json";
+            FileReader reader = new FileReader(fileName);
+            JSONParser parser = new JSONParser();
+            JSONObject json = (JSONObject) parser.parse(reader);
+            reader.close();
 
-        Game game = new Game(user, interaction.getOptionLongValueByIndex(0).get());
+            // Add the server to the JSON if they're not already on file
+            if (!json.containsKey(interaction.getServer().get().getIdAsString())) {
+                json.put(interaction.getServer().get().getIdAsString(), new JSONObject());
+                Files.write(Paths.get(fileName), json.toJSONString().getBytes());
+            }
+        } catch (IOException | ParseException e) {
+            e.printStackTrace();
+        }
+
+        Game game = new Game(interaction.getServer().get(), user, interaction.getOptionLongValueByIndex(0).get());
 
         // Player tried to bet less than one point
         if (game.getBet() < 1) {

@@ -1,6 +1,7 @@
 package com.github.AndrewAlbizati;
 
 import org.javacord.api.entity.message.Message;
+import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -13,15 +14,17 @@ import java.nio.file.Paths;
 
 public class Game {
     private Message message;
-    private User user;
-    private Deck deck;
 
-    private Deck dealerHand;
-    private Deck playerHand;
-
+    private final Server server;
+    private final User user;
     private long bet;
 
-    public Game(User user, long bet) {
+    private final Deck deck;
+    private final Deck dealerHand;
+    private final Deck playerHand;
+
+    public Game(Server server, User user, long bet) {
+        this.server = server;
         this.user = user;
         this.bet = bet;
 
@@ -49,32 +52,16 @@ public class Game {
         return user;
     }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
-
     public Deck getDeck() {
         return deck;
-    }
-
-    public void setDeck(Deck deck) {
-        this.deck = deck;
     }
 
     public Deck getDealerHand() {
         return dealerHand;
     }
 
-    public void setDealerHand(Deck deck) {
-        this.dealerHand = deck;
-    }
-
     public Deck getPlayerHand() {
         return playerHand;
-    }
-
-    public void setPlayerHand(Deck deck) {
-        this.playerHand = deck;
     }
 
     public long getBet() {
@@ -99,12 +86,14 @@ public class Game {
             JSONObject json = (JSONObject) parser.parse(reader);
             reader.close();
 
+            JSONObject serverPoints = (JSONObject) json.get(server.getIdAsString());
+
             // Add the user to the JSON if they're not already on file
-            if (!json.containsKey(user.getIdAsString())) {
-                json.put(user.getIdAsString(), 100L); // Player receives 100 points to start with
+            if (!serverPoints.containsKey(user.getIdAsString())) {
+                serverPoints.put(user.getIdAsString(), 100L); // Player receives 100 points to start with
             }
 
-            return (long) json.get(user.getIdAsString());
+            return (long) serverPoints.get(user.getIdAsString());
 
         } catch (ParseException | IOException e) {
             e.printStackTrace();
@@ -126,14 +115,17 @@ public class Game {
             JSONObject json = (JSONObject) parser.parse(reader);
             reader.close();
 
+            JSONObject serverPoints = (JSONObject) json.get(server.getIdAsString());
+
             // Add the user to the JSON if they're not already on file
-            if (!json.containsKey(user.getIdAsString())) {
-                json.put(user.getIdAsString(), 100L); // Player receives 100 points to start with
+            if (!serverPoints.containsKey(user.getIdAsString())) {
+                serverPoints.put(user.getIdAsString(), 100L); // Player receives 100 points to start with
             }
 
-            long userPoints = (long) json.get(user.getIdAsString());
+            long userPoints = (long) serverPoints.get(user.getIdAsString());
 
-            json.put(user.getIdAsString(), userPoints + pointAmount);
+            serverPoints.put(user.getIdAsString(), userPoints + pointAmount);
+            json.put(server.getIdAsString(), serverPoints);
 
             Files.write(Paths.get(fileName), json.toJSONString().getBytes());
         } catch (IOException | ParseException e) {
