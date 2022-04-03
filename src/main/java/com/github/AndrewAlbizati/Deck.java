@@ -32,39 +32,21 @@ public class Deck extends ArrayList<Card> {
     }
 
     /**
-     * Prints out each of the cards in the deck to the console.
-     */
-    public void printDeck() {
-        for (int i = 0; i < super.size(); i++) {
-            Card c = super.get(i);
-            System.out.println(c.getName());
-        }
-    }
-
-    /**
      * Sorts the deck based on value, ignoring suits.
      */
     public void sortDeck() {
-        Object[] cards = this.toArray();
         boolean sorted = false;
-        Card temp;
-
         while(!sorted) {
             sorted = true;
-            for (int i = 0; i < cards.length - 1; i++) {
-                Card c = (Card) cards[i];
-                Card nextC = (Card) cards[i + 1];
-                if (compare(c, nextC) == cards[i]) {
-                    temp = c;
-                    cards[i] = cards[i+1];
-                    cards[i+1] = temp;
+            for (int i = 0; i < this.size() - 1; i++) {
+                Card c = this.get(i);
+                Card nextC = this.get(i + 1);
+                if (compare(c, nextC) == c) {
+                    this.set(i, nextC);
+                    this.set(i + 1, c);
                     sorted = false;
                 }
             }
-        }
-        clear();
-        for (int i = 0; i < cards.length; i++) {
-            add((Card) cards[i]);
         }
     }
 
@@ -82,5 +64,100 @@ public class Deck extends ArrayList<Card> {
      */
     public void reverseDeck() {
         Collections.reverse(this);
+    }
+
+    /**
+     * Checks if a deck is soft (contains an ace valued at 11).
+     *
+     * @return Whether or not the deck is soft.
+     */
+    public boolean isSoft() {
+        int aceCount = 0;
+        for (Card c : this) {
+            if (c.getValue() == 1) {
+                aceCount++;
+            }
+        }
+        // Hands without aces can't be soft
+        if (aceCount == 0) {
+            return false;
+        }
+
+        int scoreWithoutAce = 0;
+        for (Card c : this) {
+            switch (c.getValue()) {
+                case 1:
+                    break;
+
+                case 11:
+                case 12:
+                case 13:
+                    scoreWithoutAce += 10;
+                    break;
+
+                default:
+                    scoreWithoutAce += c.getValue();
+            }
+        }
+
+        if (scoreWithoutAce > 9 && aceCount > 1) {
+            return false;
+        }
+
+        return scoreWithoutAce < 11;
+    }
+
+    /**
+     * Evaluates the score of the deck.
+     * Face cards are worth 10 points, aces are worth 1 or 11 points.
+     *
+     * @return The Blackjack score of the deck.
+     */
+    public int getScore() {
+        int score = 0;
+
+        Deck d2 = new Deck(0);
+        d2.addAll(this);
+
+        d2.sortDeck();
+        d2.reverseDeck();
+
+        for (Card c : d2) {
+            switch (c.getValue()) {
+                case 1 -> {
+                    // Next card is an Ace
+                    if (score + 11 <= 21) {
+                        if (d2.size() > d2.indexOf(c) + 1) {
+                            if (d2.get(d2.indexOf(c) + 1).getValue() == 1) {
+                                score += 1;
+                                break;
+                            }
+                        }
+
+                        score += 11;
+                        break;
+                    }
+                    score += 1;
+                }
+                case 11, 12, 13 -> score += 10;
+                default -> score += c.getValue();
+            }
+        }
+
+        return score;
+    }
+
+    /**
+     * Converts a deck into a user-friendly string.
+     *
+     * @return A string that lists the name of each card in the deck.
+     */
+    public String toString() {
+        StringBuilder deckString = new StringBuilder();
+        for (Card c : this) {
+            deckString.append(c.getName());
+            deckString.append("\n");
+        }
+        return deckString.toString();
     }
 }

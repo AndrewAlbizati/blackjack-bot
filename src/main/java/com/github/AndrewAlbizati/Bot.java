@@ -9,7 +9,7 @@ import org.javacord.api.interaction.SlashCommandOption;
 import org.javacord.api.interaction.SlashCommandOptionType;
 
 import java.io.*;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 public class Bot {
@@ -37,7 +37,7 @@ public class Bot {
         }
 
         // Get token from config.properties
-        String token = "";
+        String token;
         try {
             Properties prop = new Properties();
             FileInputStream ip = new FileInputStream("config.properties");
@@ -62,14 +62,14 @@ public class Bot {
         api.updateStatus(UserStatus.ONLINE);
         api.updateActivity(ActivityType.PLAYING, "Type /blackjack to start a game.");
 
-        // Create slash command (may take a few mins to update on Discord)
+        // Create slash command (may take a few minutes to update on Discord)
         SlashCommand.with("blackjack", "Plays a game of Blackjack that you can bet points on",
-                Arrays.asList(
+                List.of(
                         SlashCommandOption.create(SlashCommandOptionType.LONG, "BET", "Amount of points you wish to bet", true)
                 )).createGlobal(api).join();
 
         // Create slash command listener for blackjack
         api.addSlashCommandCreateListener(new BlackjackCommandHandler());
-        api.addMessageComponentCreateListener(new OnButtonPress(api));
+        api.addMessageComponentCreateListener(new OnButtonPress());
     }
 }

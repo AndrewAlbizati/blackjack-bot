@@ -1,6 +1,6 @@
 package com.github.AndrewAlbizati;
 
-import org.javacord.api.entity.message.MessageFlag;
+import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.component.ActionRow;
 import org.javacord.api.entity.message.component.Button;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
@@ -11,12 +11,10 @@ import org.javacord.api.interaction.callback.InteractionCallbackDataFlag;
 import org.javacord.api.listener.interaction.SlashCommandCreateListener;
 
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.HashMap;
 
 public class BlackjackCommandHandler implements SlashCommandCreateListener {
-    public BlackjackCommandHandler() {
-
-    }
+    public static final HashMap<Long, Game> blackjackGames = new HashMap<>();
 
     @Override
     public void onSlashCommandCreate(SlashCommandCreateEvent event) {
@@ -28,11 +26,27 @@ public class BlackjackCommandHandler implements SlashCommandCreateListener {
             return;
         }
 
-        long bet = interaction.getOptions().get(0).getLongValue().get();
-        long playerPointAmount = BlackjackUtils.getPlayerPointAmount(user.getIdAsString());
+        if (blackjackGames.containsKey(user.getId())) {
+            interaction.createImmediateResponder()
+                    .setContent("Please finish your previous Blackjack game before starting a new one.")
+                    .setFlags(InteractionCallbackDataFlag.EPHEMERAL)
+                    .respond();
+            return;
+        }
+
+        if (interaction.getOptionLongValueByIndex(0).isEmpty()) {
+            interaction.createImmediateResponder()
+                    .setContent("Please provide a valid bet.")
+                    .setFlags(InteractionCallbackDataFlag.EPHEMERAL)
+                    .respond();
+            return;
+        }
+
+
+        Game game = new Game(user, interaction.getOptionLongValueByIndex(0).get());
 
         // Player tried to bet less than one point
-        if (bet < 1) {
+        if (game.getBet() < 1) {
             interaction.createImmediateResponder()
                     .setContent("You must bet at least one point.")
                     .setFlags(InteractionCallbackDataFlag.EPHEMERAL)
@@ -41,9 +55,9 @@ public class BlackjackCommandHandler implements SlashCommandCreateListener {
         }
 
         // Player's bet is too high
-        if (playerPointAmount < bet) {
+        if (game.getPlayerPointAmount() < game.getBet()) {
             interaction.createImmediateResponder()
-                    .setContent("Sorry, you need " + (bet - playerPointAmount) + " more points.")
+                    .setContent("Sorry, you need " + (game.getBet() - game.getPlayerPointAmount()) + " more points.")
                     .setFlags(InteractionCallbackDataFlag.EPHEMERAL)
                     .respond();
             return;
@@ -53,91 +67,68 @@ public class BlackjackCommandHandler implements SlashCommandCreateListener {
         // Create embed with all game information
         EmbedBuilder eb = new EmbedBuilder();
         eb.setTitle("Blackjack");
-        eb.setDescription("You bet **" + bet + "** point" + (bet != 1 ? "s" : "") +"\n" +
-                "You have **" + playerPointAmount + "** point" + (playerPointAmount != 1 ? "s" : "") + "\n\n" +
+        eb.setDescription("You bet **" + game.getBet() + "** point" + (game.getBet() != 1 ? "s" : "") +"\n" +
+                "You have **" + game.getPlayerPointAmount() + "** point" + (game.getPlayerPointAmount() != 1 ? "s" : "") + "\n\n" +
                 "**Rules**\n" +
                 "Dealer must hit soft 17\n" +
                 "Blackjack pays 3 to 2\n" +
                 "Splitting is **not** allowed");
         eb.setColor(new Color(184, 0, 9));
         eb.setFooter("Game with " + user.getDiscriminatedName(), user.getAvatar());
-        try {
-            eb.setThumbnail("https://the-datascientist.com/wp-content/uploads/2020/05/counting-cards-black-jack.png");
-        } catch (Exception e) {
-            // Image not found
-        }
-
-        ArrayList<String> idsInPlay = new ArrayList<>();
-        Deck d = new Deck(0);
-
-        // Generate 4 different random cards
-        do {
-            Card c = BlackjackUtils.randomCard();
-            if (!idsInPlay.contains(c.getId())) {
-                idsInPlay.add(c.getId());
-                d.add(c);
-            }
-        } while (idsInPlay.size() < 4);
-
-        // First two cards go to the dealer
-        Deck dealerHand = new Deck(0);
-        dealerHand.add(d.get(0));
-        dealerHand.add(d.get(1));
-
-        // Second two cards go to the player
-        Deck playerHand = new Deck(0);
-        playerHand.add(d.get(2));
-        playerHand.add(d.get(3));
+        eb.setThumbnail("https://the-datascientist.com/wp-content/uploads/2020/05/counting-cards-black-jack.png");
 
         // Player is dealt a Blackjack
-        if (BlackjackUtils.getScore(playerHand) == 21) {
-            eb.addField("Dealer's Hand (" + (BlackjackUtils.isSoft(dealerHand) ? "Soft " : "") + BlackjackUtils.getScore(dealerHand) + ")", BlackjackUtils.cardsToString(dealerHand));
-            eb.addField("Your Hand (" + (BlackjackUtils.isSoft(playerHand) ? "Soft " : "") + BlackjackUtils.getScore(playerHand) + ")", BlackjackUtils.cardsToString(playerHand));
-            eb.setDescription("**You have a blackjack!**");
+        if (game.getPlayerHand().getScore() == 21) {
+            eb.addField("Dealer's Hand (" + (game.getDealerHand().isSoft() ? "Soft " : "") + game.getDealerHand().getScore() + ")", game.getDealerHand().toString());
+            eb.addField("Your Hand (" + (game.getPlayerHand().isSoft() ? "Soft " : "") + game.getPlayerHand().getScore() + ")", game.getPlayerHand().toString());
+            eb.setDescription("**You have a blackjack! You win " + (long) Math.ceil(game.getBet() * 1.5) + " points!**");
             eb.setFooter(user.getDiscriminatedName() + " won!", user.getAvatar());
 
             interaction.createImmediateResponder()
                     .addEmbed(eb)
                     .respond();
-            BlackjackUtils.givePoints(user.getIdAsString(), (long) Math.ceil(bet * 1.5));
+            game.givePoints((long) Math.ceil(game.getBet() * 1.5));
             return;
         }
 
         // Dealer is dealt a Blackjack
-        if (dealerHand.get(0).getValue() == 1 && BlackjackUtils.getScore(dealerHand) == 21) {
-            eb.addField("Dealer's Hand (" + (BlackjackUtils.isSoft(dealerHand) ? "Soft " : "") + BlackjackUtils.getScore(dealerHand) + ")", BlackjackUtils.cardsToString(dealerHand));
-            eb.addField("Your Hand (" + (BlackjackUtils.isSoft(playerHand) ? "Soft " : "") + BlackjackUtils.getScore(playerHand) + ")", BlackjackUtils.cardsToString(playerHand));
-
-            eb.setDescription("**Dealer has a blackjack!**");
+        if (game.getDealerHand().get(0).getValue() == 1 && game.getDealerHand().getScore() == 21) {
+            eb.addField("Dealer's Hand (" + (game.getDealerHand().isSoft() ? "Soft " : "") + game.getDealerHand().getScore() + ")", game.getDealerHand().toString());
+            eb.addField("Your Hand (" + (game.getPlayerHand().isSoft() ? "Soft " : "") + game.getPlayerHand().getScore() + ")", game.getPlayerHand().toString());
+            eb.setDescription("**Dealer has a blackjack! You lose " + game.getBet() + " point" + (game.getBet() == 1 ? "" : "s") + "**");
             eb.setFooter(user.getDiscriminatedName() + " lost!", user.getAvatar());
 
             interaction.createImmediateResponder()
                     .addEmbed(eb)
                     .respond();
-            BlackjackUtils.givePoints(user.getIdAsString(), -bet);
+            game.givePoints(-game.getBet());
             return;
         }
 
-        // Show the dealer's upcard and the players hand
-        eb.addField("Dealer's Hand", dealerHand.get(0).getName());
-        eb.addField("Your Hand (" + (BlackjackUtils.isSoft(playerHand) ? "Soft " : "") + BlackjackUtils.getScore(playerHand) + ")", BlackjackUtils.cardsToString(playerHand));
+        // Show the dealer's up card and the players hand
+        eb.addField("Dealer's Hand", game.getDealerHand().get(0).getName());
+        eb.addField("Your Hand (" + (game.getPlayerHand().isSoft() ? "Soft " : "") + game.getPlayerHand().getScore() + ")", game.getPlayerHand().toString());
 
+        Message message;
         // Add double down option if the player has enough points
-        if (bet * 2 <= playerPointAmount) {
-            interaction.createImmediateResponder()
+        if (game.getBet() * 2 <= game.getPlayerPointAmount()) {
+            message = interaction.createImmediateResponder()
                     .addEmbed(eb)
                     .addComponents(
                             ActionRow.of(Button.primary("hit", "Hit"),
                                     Button.primary("stand", "Stand"),
                                     Button.primary("dd", "Double Down")))
-                    .respond();
+                    .respond().join().update().join();
         } else {
-            interaction.createImmediateResponder()
+            message = interaction.createImmediateResponder()
                     .addEmbed(eb)
                     .addComponents(
                             ActionRow.of(Button.primary("hit", "Hit"),
                                     Button.primary("stand", "Stand")))
-                    .respond();
+                    .respond().join().update().join();
         }
+
+        game.setMessage(message);
+        blackjackGames.put(user.getId(), game);
     }
 }
