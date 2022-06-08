@@ -16,12 +16,20 @@ public class Card {
         this.suit = suit;
     }
 
+    public int compareTo(Card card) {
+        if (card == null) {
+            return 0;
+        }
+
+        return this.value - card.value;
+    }
+
     /**
      * Converts the card class instance into a human-readable name.
      *
      * @return The name of the card.
      */
-    public String getName() {
+    public String toString() {
         String num = switch (value) {
             case 1 -> "Ace";
             case 11 -> "Jack";

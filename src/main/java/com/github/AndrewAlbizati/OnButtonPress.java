@@ -38,7 +38,7 @@ public class OnButtonPress implements MessageComponentCreateListener {
                 endGame = true;
 
             case "hit":
-                game.getPlayerHand().add(game.getDeck().get(0));
+                game.getPlayerHand().add(game.getDeck().deal());
 
                 eb.removeAllFields();
                 eb.setDescription("You bet **" + game.getBet() + "** point" + (game.getBet() != 1 ? "s" : "") + "\n" +
@@ -48,7 +48,7 @@ public class OnButtonPress implements MessageComponentCreateListener {
                         "Blackjack pays 3 to 2\n" +
                         "Splitting is **not** allowed");
 
-                eb.addField("Dealer", game.getDealerHand().get(0).getName());
+                eb.addField("Dealer", game.getDealerHand().get(0).toString());
                 eb.addField("Your Hand (" + (game.getPlayerHand().isSoft() ? "Soft " : "") + game.getPlayerHand().getScore() + ")", game.getPlayerHand().toString());
 
                 // End game if player busts
@@ -108,7 +108,7 @@ public class OnButtonPress implements MessageComponentCreateListener {
 
         // Dealer hits until they get 17+
         while (game.getDealerHand().getScore() < 17) {
-            game.getDealerHand().add(game.getDeck().remove(0));
+            game.getDealerHand().add(game.getDeck().deal());
         }
 
         // Add final score

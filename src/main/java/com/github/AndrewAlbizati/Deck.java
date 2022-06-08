@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class Deck extends ArrayList<Card> {
+    private final int amountOfDecks;
+
     public Deck(int amountOfDecks) {
+        this.amountOfDecks = amountOfDecks;
         initializeDeck(amountOfDecks);
     }
 
@@ -41,7 +44,7 @@ public class Deck extends ArrayList<Card> {
             for (int i = 0; i < this.size() - 1; i++) {
                 Card c = this.get(i);
                 Card nextC = this.get(i + 1);
-                if (compare(c, nextC) == c) {
+                if (c.compareTo(nextC) > 0) {
                     this.set(i, nextC);
                     this.set(i + 1, c);
                     sorted = false;
@@ -50,13 +53,18 @@ public class Deck extends ArrayList<Card> {
         }
     }
 
-    private static Card compare(Card c1, Card c2) {
-        if (c1.getValue() > c2.getValue()) {
-            return c1;
-        } else if (c2.getValue() > c1.getValue()) {
-            return c2;
+    public Card deal() {
+        if (size() > 0) {
+            return remove(0);
         }
-        return null;
+        if (amountOfDecks <= 0) {
+            return null;
+        }
+
+        initializeDeck(amountOfDecks);
+        shuffleDeck();
+
+        return remove(0);
     }
 
     /**
@@ -155,7 +163,7 @@ public class Deck extends ArrayList<Card> {
     public String toString() {
         StringBuilder deckString = new StringBuilder();
         for (Card c : this) {
-            deckString.append(c.getName());
+            deckString.append(c);
             deckString.append("\n");
         }
         return deckString.toString();

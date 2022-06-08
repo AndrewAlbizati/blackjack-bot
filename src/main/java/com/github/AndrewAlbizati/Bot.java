@@ -8,52 +8,22 @@ import org.javacord.api.interaction.SlashCommand;
 import org.javacord.api.interaction.SlashCommandOption;
 import org.javacord.api.interaction.SlashCommandOptionType;
 
-import java.io.*;
 import java.util.List;
-import java.util.Properties;
 
 public class Bot {
-    public static void main(String[] args) {
-        // Check if bjpoints.json and config.properties are present, creates new files if absent
-        try {
-            File pointsJSONFile = new File("bjpoints.json");
-            if (pointsJSONFile.createNewFile()) {
-                FileWriter writer = new FileWriter("bjpoints.json");
-                writer.write("{}"); // Empty JSON object
-                writer.close();
-                System.out.println("bjpoints.json has been created");
-            }
+    private final String token;
+    private final Deck deck;
 
-            File config = new File("config.properties");
-            if (config.createNewFile()) {
-                FileWriter writer = new FileWriter("config.properties");
-                writer.write("token=");
-                writer.close();
-                System.out.println("config.properties has been created");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
+    public Bot(String token) {
+        this.token = token;
+        deck = new Deck(6);
+    }
 
-        // Get token from config.properties
-        String token;
-        try {
-            Properties prop = new Properties();
-            FileInputStream ip = new FileInputStream("config.properties");
-            prop.load(ip);
-            ip.close();
+    public Deck getDeck() {
+        return deck;
+    }
 
-            token = prop.getProperty("token");
-
-            if (token.length() == 0)
-                throw new NullPointerException("Please add a Discord bot token into config.properties");
-        } catch (NullPointerException | IOException e) {
-            e.printStackTrace();
-            System.out.println("Token not found! " + e.getMessage());
-            return;
-        }
-
+    public void run() {
         // Start Discord bot
         DiscordApi api = new DiscordApiBuilder().setToken(token).login().join();
         System.out.println("Logged in as " + api.getYourself().getDiscriminatedName());
@@ -69,7 +39,7 @@ public class Bot {
                 )).createGlobal(api).join();
 
         // Create slash command listener for blackjack
-        api.addSlashCommandCreateListener(new BlackjackCommandHandler());
+        api.addSlashCommandCreateListener(new BlackjackCommandHandler(this));
         api.addMessageComponentCreateListener(new OnButtonPress());
     }
 }

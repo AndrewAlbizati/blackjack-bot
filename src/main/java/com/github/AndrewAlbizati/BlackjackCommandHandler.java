@@ -21,7 +21,12 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 
 public class BlackjackCommandHandler implements SlashCommandCreateListener {
+    private final Bot bot;
     public static final HashMap<Long, Game> blackjackGames = new HashMap<>();
+
+    public BlackjackCommandHandler(Bot bot) {
+        this.bot = bot;
+    }
 
     @Override
     public void onSlashCommandCreate(SlashCommandCreateEvent event) {
@@ -65,7 +70,7 @@ public class BlackjackCommandHandler implements SlashCommandCreateListener {
             e.printStackTrace();
         }
 
-        Game game = new Game(interaction.getServer().get(), user, interaction.getOptionLongValueByIndex(0).get());
+        Game game = new Game(bot, interaction.getServer().get(), user, interaction.getOptionLongValueByIndex(0).get());
 
         // Player tried to bet less than one point
         if (game.getBet() < 1) {
@@ -128,7 +133,7 @@ public class BlackjackCommandHandler implements SlashCommandCreateListener {
         }
 
         // Show the dealer's up card and the players hand
-        eb.addField("Dealer's Hand", game.getDealerHand().get(0).getName());
+        eb.addField("Dealer's Hand", game.getDealerHand().get(0).toString());
         eb.addField("Your Hand (" + (game.getPlayerHand().isSoft() ? "Soft " : "") + game.getPlayerHand().getScore() + ")", game.getPlayerHand().toString());
 
         Message message;

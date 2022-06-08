@@ -23,21 +23,21 @@ public class Game {
     private final Deck dealerHand;
     private final Deck playerHand;
 
-    public Game(Server server, User user, long bet) {
+    public Game(Bot bot, Server server, User user, long bet) {
         this.server = server;
         this.user = user;
         this.bet = bet;
 
-        deck = new Deck(6);
-        deck.shuffleDeck();
-
-        dealerHand = new Deck(0);
-        dealerHand.add(deck.remove(0));
-        dealerHand.add(deck.remove(0));
+        this.deck = bot.getDeck();
 
         playerHand = new Deck(0);
-        playerHand.add(deck.remove(0));
-        playerHand.add(deck.remove(0));
+        dealerHand = new Deck(0);
+
+        playerHand.add(deck.deal());
+        dealerHand.add(deck.deal());
+
+        playerHand.add(deck.deal());
+        dealerHand.add(deck.deal());
     }
 
     public Message getMessage() {
