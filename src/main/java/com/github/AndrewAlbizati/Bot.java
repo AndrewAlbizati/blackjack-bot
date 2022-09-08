@@ -17,6 +17,7 @@ public class Bot {
     public Bot(String token) {
         this.token = token;
         deck = new Deck(6);
+        deck.shuffleDeck();
     }
 
     public Deck getDeck() {

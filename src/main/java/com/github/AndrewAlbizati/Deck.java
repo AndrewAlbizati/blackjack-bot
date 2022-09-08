@@ -80,6 +80,11 @@ public class Deck extends ArrayList<Card> {
      * @return Whether or not the deck is soft.
      */
     public boolean isSoft() {
+        Deck d2 = new Deck(0);
+        d2.addAll(this);
+
+        d2.sortDeck();
+
         int aceCount = 0;
         for (Card c : this) {
             if (c.getValue() == 1) {
@@ -92,10 +97,11 @@ public class Deck extends ArrayList<Card> {
         }
 
         int scoreWithoutAce = 0;
-        for (Card c : this) {
+        for (int i = 1; i < d2.size(); i++) {
+            Card c = d2.get(i);
             switch (c.getValue()) {
                 case 1:
-                    break;
+                    scoreWithoutAce += 1;
 
                 case 11:
                 case 12:
