@@ -1,8 +1,6 @@
 package com.github.AndrewAlbizati;
 
 import org.javacord.api.entity.message.Message;
-import org.javacord.api.entity.message.component.ActionRow;
-import org.javacord.api.entity.message.component.Button;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
@@ -20,11 +18,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 
-public class BlackjackCommandHandler implements SlashCommandCreateListener {
+public class CommandHandler implements SlashCommandCreateListener {
     private final Bot bot;
     public static final HashMap<Long, Game> blackjackGames = new HashMap<>();
 
-    public BlackjackCommandHandler(Bot bot) {
+    public CommandHandler(Bot bot) {
         this.bot = bot;
     }
 
@@ -98,16 +96,17 @@ public class BlackjackCommandHandler implements SlashCommandCreateListener {
                 "You have **" + game.getPlayerPointAmount() + "** point" + (game.getPlayerPointAmount() != 1 ? "s" : "") + "\n\n" +
                 "**Rules**\n" +
                 "Dealer must hit soft 17\n" +
-                "Blackjack pays 3 to 2\n" +
-                "Splitting is **not** allowed");
+                "Blackjack pays 3 to 2");
         eb.setColor(new Color(184, 0, 9));
         eb.setFooter("Game with " + user.getDiscriminatedName(), user.getAvatar());
         eb.setThumbnail("https://the-datascientist.com/wp-content/uploads/2020/05/counting-cards-black-jack.png");
 
+        Hand playerHand = game.getPlayerHands().get(0);
+
         // Player is dealt a Blackjack
-        if (game.getPlayerHand().getScore() == 21) {
+        if (playerHand.getScore() == 21) {
             eb.addField("Dealer's Hand (" + (game.getDealerHand().isSoft() ? "Soft " : "") + game.getDealerHand().getScore() + ")", game.getDealerHand().toString());
-            eb.addField("Your Hand (" + (game.getPlayerHand().isSoft() ? "Soft " : "") + game.getPlayerHand().getScore() + ")", game.getPlayerHand().toString());
+            eb.addField("Your Hand (" + (playerHand.isSoft() ? "Soft " : "") + playerHand.getScore() + ")", playerHand.toString());
             eb.setDescription("**You have a blackjack! You win " + (long) Math.ceil(game.getBet() * 1.5) + " points!**");
             eb.setFooter(user.getDiscriminatedName() + " won!", user.getAvatar());
 
@@ -121,7 +120,7 @@ public class BlackjackCommandHandler implements SlashCommandCreateListener {
         // Dealer is dealt a Blackjack
         if (game.getDealerHand().get(0).getValue() == 1 && game.getDealerHand().getScore() == 21) {
             eb.addField("Dealer's Hand (" + (game.getDealerHand().isSoft() ? "Soft " : "") + game.getDealerHand().getScore() + ")", game.getDealerHand().toString());
-            eb.addField("Your Hand (" + (game.getPlayerHand().isSoft() ? "Soft " : "") + game.getPlayerHand().getScore() + ")", game.getPlayerHand().toString());
+            eb.addField("Your Hand (" + (playerHand.isSoft() ? "Soft " : "") + playerHand.getScore() + ")", playerHand.toString());
             eb.setDescription("**Dealer has a blackjack! You lose " + game.getBet() + " point" + (game.getBet() == 1 ? "" : "s") + "**");
             eb.setFooter(user.getDiscriminatedName() + " lost!", user.getAvatar());
 
@@ -134,28 +133,17 @@ public class BlackjackCommandHandler implements SlashCommandCreateListener {
 
         // Show the dealer's up card and the players hand
         eb.addField("Dealer's Hand", game.getDealerHand().get(0).toString());
-        eb.addField("Your Hand (" + (game.getPlayerHand().isSoft() ? "Soft " : "") + game.getPlayerHand().getScore() + ")", game.getPlayerHand().toString());
+        eb.addField("Your Hand (" + (playerHand.isSoft() ? "Soft " : "") + playerHand.getScore() + ")", playerHand.toString());
 
         Message message;
         // Add double down option if the player has enough points
-        if (game.getBet() * 2 <= game.getPlayerPointAmount()) {
-            message = interaction.createImmediateResponder()
-                    .addEmbed(eb)
-                    .addComponents(
-                            ActionRow.of(Button.primary("hit", "Hit"),
-                                    Button.primary("stand", "Stand"),
-                                    Button.primary("dd", "Double Down")))
-                    .respond().join().update().join();
-        } else {
-            message = interaction.createImmediateResponder()
-                    .addEmbed(eb)
-                    .addComponents(
-                            ActionRow.of(Button.primary("hit", "Hit"),
-                                    Button.primary("stand", "Stand")))
-                    .respond().join().update().join();
-        }
+
+        message = interaction.createImmediateResponder().setContent("Setting up game...")
+                .respond().join().update().join();
 
         game.setMessage(message);
+        game.refreshMessage();
+
         blackjackGames.put(user.getId(), game);
     }
 }

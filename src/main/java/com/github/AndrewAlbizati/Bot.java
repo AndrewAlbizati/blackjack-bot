@@ -40,7 +40,7 @@ public class Bot {
                 )).createGlobal(api).join();
 
         // Create slash command listener for blackjack
-        api.addSlashCommandCreateListener(new BlackjackCommandHandler(this));
+        api.addSlashCommandCreateListener(new CommandHandler(this));
         api.addMessageComponentCreateListener(new OnButtonPress());
     }
 }

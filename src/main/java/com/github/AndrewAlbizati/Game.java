@@ -1,16 +1,21 @@
 package com.github.AndrewAlbizati;
 
 import org.javacord.api.entity.message.Message;
+import org.javacord.api.entity.message.component.ActionRow;
+import org.javacord.api.entity.message.component.Button;
+import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import java.awt.*;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 
 public class Game {
     private Message message;
@@ -20,8 +25,10 @@ public class Game {
     private long bet;
 
     private final Deck deck;
-    private final Deck dealerHand;
-    private final Deck playerHand;
+    private final Hand dealerHand;
+    private final ArrayList<Hand> playerHand = new ArrayList<>();
+
+    private int selectedHandIndex = 0;
 
     public Game(Bot bot, Server server, User user, long bet) {
         this.server = server;
@@ -30,14 +37,24 @@ public class Game {
 
         this.deck = bot.getDeck();
 
-        playerHand = new Deck(0);
-        dealerHand = new Deck(0);
+        playerHand.clear();
 
-        playerHand.add(deck.deal());
+        playerHand.add(new Hand());
+        dealerHand = new Hand();
+
+        playerHand.get(0).add(deck.deal());
         dealerHand.add(deck.deal());
 
-        playerHand.add(deck.deal());
+        playerHand.get(0).add(deck.deal());
         dealerHand.add(deck.deal());
+    }
+
+    public int getSelectedHandIndex() {
+        return selectedHandIndex;
+    }
+
+    public void incrementSelectedHandIndex() {
+        selectedHandIndex++;
     }
 
     public Message getMessage() {
@@ -48,6 +65,86 @@ public class Game {
         this.message = message;
     }
 
+    public void refreshMessage() {
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setTitle("Blackjack");
+        eb.setDescription("You bet **" + bet + "** point" + (bet != 1 ? "s" : "") +"\n" +
+                "You have **" + getPlayerPointAmount() + "** point" + (getPlayerPointAmount() != 1 ? "s" : "") + "\n\n" +
+                "**Rules**\n" +
+                "Dealer must hit soft 17\n" +
+                "Blackjack pays 3 to 2");
+        eb.setColor(new Color(184, 0, 9));
+        eb.setFooter("Game with " + user.getDiscriminatedName(), user.getAvatar());
+        eb.setThumbnail("https://the-datascientist.com/wp-content/uploads/2020/05/counting-cards-black-jack.png");
+
+        // Show the dealer's up card and the players hand
+        eb.addField("Dealer's Hand", getDealerHand().get(0).toString());
+        eb.addField("Your Hand (" + (getPlayerHands().get(selectedHandIndex).isSoft() ? "Soft " : "") + getPlayerHands().get(selectedHandIndex).getScore() + ")", getPlayerHands().get(selectedHandIndex).toString());
+
+        if (getPlayerHands().size() > 1) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < getPlayerHands().size(); i++) {
+                Hand hand = getPlayerHands().get(i);
+                if (i == selectedHandIndex) {
+                    sb.append("**");
+                }
+
+                sb.append("Hand ");
+                sb.append((i + 1));
+                sb.append(": ");
+
+                sb.append((hand.isSoft() ? "Soft " : ""));
+                sb.append(hand.getScore());
+                if (i == selectedHandIndex) {
+                    sb.append("**");
+                }
+
+                sb.append("\n");
+            }
+            eb.addField("Other Hands", sb.toString());
+        }
+
+        if (getPlayerHands().get(getSelectedHandIndex()).isCompleted()) {
+            message.createUpdater()
+                    .setEmbed(eb)
+                    .removeAllComponents()
+                    .applyChanges();
+        } else {
+            Hand playerHand = getPlayerHands().get(getSelectedHandIndex());
+
+            if (getBet() * 2 <= getPlayerPointAmount() && playerHand.size() == 2) {
+                if (playerHand.get(0).compareTo(playerHand.get(1)) == 0) {
+                    message.createUpdater()
+                            .setEmbed(eb)
+                            .removeAllComponents()
+                            .addComponents(
+                                    ActionRow.of(Button.primary("hit", "Hit"),
+                                            Button.primary("stand", "Stand"),
+                                            Button.primary("dd", "Double Down"),
+                                            Button.primary("split", "Split")))
+                            .applyChanges();
+                } else {
+                    message.createUpdater()
+                            .setEmbed(eb)
+                            .removeAllComponents()
+                            .addComponents(
+                                    ActionRow.of(Button.primary("hit", "Hit"),
+                                            Button.primary("stand", "Stand"),
+                                            Button.primary("dd", "Double Down")))
+                            .applyChanges();
+                }
+            } else {
+                message.createUpdater()
+                        .setEmbed(eb)
+                        .removeAllComponents()
+                        .addComponents(
+                                ActionRow.of(Button.primary("hit", "Hit"),
+                                        Button.primary("stand", "Stand")))
+                        .applyChanges();
+            }
+        }
+    }
+
     public User getUser() {
         return user;
     }
@@ -56,11 +153,11 @@ public class Game {
         return deck;
     }
 
-    public Deck getDealerHand() {
+    public Hand getDealerHand() {
         return dealerHand;
     }
 
-    public Deck getPlayerHand() {
+    public ArrayList<Hand> getPlayerHands() {
         return playerHand;
     }
 
