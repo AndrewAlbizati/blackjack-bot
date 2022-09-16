@@ -95,7 +95,7 @@ public class CommandHandler implements SlashCommandCreateListener {
         eb.setDescription("You bet **" + game.getBet() + "** point" + (game.getBet() != 1 ? "s" : "") +"\n" +
                 "You have **" + game.getPlayerPointAmount() + "** point" + (game.getPlayerPointAmount() != 1 ? "s" : "") + "\n\n" +
                 "**Rules**\n" +
-                "Dealer must hit soft 17\n" +
+                "Dealer must stand on all 17s\n" +
                 "Blackjack pays 3 to 2");
         eb.setColor(new Color(184, 0, 9));
         eb.setFooter("Game with " + user.getDiscriminatedName(), user.getAvatar());
