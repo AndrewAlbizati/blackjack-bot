@@ -6,7 +6,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Properties;
 
+/**
+ * Contains Main function that is run on start.
+ */
 public class Main {
+    /**
+     * Creates bjpoints.json and config.properties if not already created.
+     * If token is provided in config.properties, the bot will start
+     * @param args N/A
+     */
     public static void main(String[] args) {
         // Check if bjpoints.json and config.properties are present, creates new files if absent
         try {

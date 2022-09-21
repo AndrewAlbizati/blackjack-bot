@@ -1,5 +1,8 @@
 package com.github.AndrewAlbizati;
 
+/**
+ * Represents a standard playing card with a suit and value
+ */
 public class Card {
     private final int value;
     public int getValue() {
@@ -16,6 +19,13 @@ public class Card {
         this.suit = suit;
     }
 
+    /**
+     * Compares the values of the current card
+     * and an additional card
+     *
+     * @param card A seperate card to be compared.
+     * @return 0 if the cards are equal, else it will return the difference
+     */
     public int compareTo(Card card) {
         if (card == null) {
             return 0;

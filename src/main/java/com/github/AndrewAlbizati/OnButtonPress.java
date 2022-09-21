@@ -6,7 +6,14 @@ import org.javacord.api.event.interaction.MessageComponentCreateEvent;
 import org.javacord.api.interaction.MessageComponentInteraction;
 import org.javacord.api.listener.interaction.MessageComponentCreateListener;
 
+/**
+ * Handles whenever a button is pressed in the game.
+ */
 public class OnButtonPress implements MessageComponentCreateListener {
+    /**
+     * Main function that handles button presses.
+     * @param messageComponentCreateEvent The event.
+     */
     @Override
     public void onComponentCreate(MessageComponentCreateEvent messageComponentCreateEvent) {
         MessageComponentInteraction messageComponentInteraction = messageComponentCreateEvent.getMessageComponentInteraction();
@@ -15,12 +22,14 @@ public class OnButtonPress implements MessageComponentCreateListener {
         Message message = messageComponentInteraction.getMessage();
         Game game = null;
 
+        // Find game that is being played
         for (Long userId : GameCommandHandler.blackjackGames.keySet()) {
             if (GameCommandHandler.blackjackGames.get(userId).getMessage().getId() == message.getId()) {
                 game = GameCommandHandler.blackjackGames.get(userId);
             }
         }
 
+        // Game couldn't be found
         if (game == null || game.getUser().getId() != messageComponentInteraction.getUser().getId()) {
             return;
         }
@@ -31,7 +40,7 @@ public class OnButtonPress implements MessageComponentCreateListener {
 
         Hand playerHand = game.getPlayerHands().get(game.getSelectedHandIndex());
 
-        // Handle each of the decisions (dd, hit, stand)
+        // Handle each of the decisions (dd, hit, stand, split)
         switch (customId) {
             case "split":
                 Card card1 = game.getPlayerHands().get(game.getSelectedHandIndex()).get(0);
@@ -86,6 +95,7 @@ public class OnButtonPress implements MessageComponentCreateListener {
 
         messageComponentInteraction.acknowledge();
 
+        // Update the Game object status for completed
         game.getPlayerHands().get(game.getSelectedHandIndex()).setCompleted(endGame);
 
         // Stop code if the game hasn't ended
@@ -93,6 +103,7 @@ public class OnButtonPress implements MessageComponentCreateListener {
             return;
         }
 
+        // Move to next hand if multiple and current hand is finished
         if (game.getPlayerHands().size() > game.getSelectedHandIndex() + 1) {
             game.incrementSelectedHandIndex();
             game.refreshMessage();
@@ -112,6 +123,11 @@ public class OnButtonPress implements MessageComponentCreateListener {
         GameCommandHandler.blackjackGames.remove(game.getUser().getId());
     }
 
+    /**
+     * End the game if the player only has 1 hand.
+     * Dealer hits until 17 or bust, and points are awarded.
+     * @param game A completed game.
+     */
     private void endOneHandGame(Game game) {
         Hand hand = game.getPlayerHands().get(0);
         EmbedBuilder eb = game.getMessage().getEmbeds().get(0).toBuilder();
@@ -180,6 +196,11 @@ public class OnButtonPress implements MessageComponentCreateListener {
                 .applyChanges();
     }
 
+    /**
+     * End the game if the player has multiple hands.
+     * Dealer hits until 17 or bust, and points are awarded
+     * @param game A completed game.
+     */
     private void endMultiHandGame(Game game) {
         EmbedBuilder eb = game.getMessage().getEmbeds().get(0).toBuilder();
         // Dealer hits until they get 17+

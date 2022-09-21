@@ -8,6 +8,9 @@ import org.javacord.api.listener.interaction.SlashCommandCreateListener;
 
 import java.awt.*;
 
+/**
+ * Handles when a user executes the /help command
+ */
 public class HelpCommandHandler implements SlashCommandCreateListener {
     private final Bot bot;
 

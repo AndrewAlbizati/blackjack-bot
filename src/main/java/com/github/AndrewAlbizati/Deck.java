@@ -3,6 +3,9 @@ package com.github.AndrewAlbizati;
 import java.util.ArrayList;
 import java.util.Collections;
 
+/**
+ * Represents the deck in a game of Blackjack.
+ */
 public class Deck extends ArrayList<Card> {
     private final int amountOfDecks;
 

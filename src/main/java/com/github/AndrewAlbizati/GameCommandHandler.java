@@ -18,6 +18,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 
+/**
+ * Handles when a user executes the /blackjack command
+ */
 public class GameCommandHandler implements SlashCommandCreateListener {
     private final Bot bot;
     public static final HashMap<Long, Game> blackjackGames = new HashMap<>();
@@ -26,6 +29,10 @@ public class GameCommandHandler implements SlashCommandCreateListener {
         this.bot = bot;
     }
 
+    /**
+     * Creates and registers a Blackjack game.
+     * @param event The event.
+     */
     @Override
     public void onSlashCommandCreate(SlashCommandCreateEvent event) {
         SlashCommandInteraction interaction = event.getSlashCommandInteraction();

@@ -2,12 +2,24 @@ package com.github.AndrewAlbizati;
 
 import java.util.ArrayList;
 
+/**
+ * Represents a hand in Blackjack.
+ */
 public class Hand extends ArrayList<Card> {
     private boolean completed = false;
 
+    /**
+     * A hand is completed if the player has stood or if the player has busted.
+     * @return If the hand is completed.
+     */
     public boolean isCompleted() {
         return completed;
     }
+
+    /**
+     * A hand is completed if the player has stood or if the player has busted.
+     * @param completed If the hand is completed.
+     */
     public void setCompleted(boolean completed) {
         this.completed = completed;
     }
@@ -106,10 +118,12 @@ public class Hand extends ArrayList<Card> {
      */
     public String toString() {
         StringBuilder deckString = new StringBuilder();
-        for (Card c : this) {
-            deckString.append(c);
+        for (int i = 0; i < this.size() - 1; i++) {
+            deckString.append(this.get(i));
             deckString.append("\n");
         }
+        deckString.append(this.get(this.size() - 1));
+
         return deckString.toString();
     }
 }

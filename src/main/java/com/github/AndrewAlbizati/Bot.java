@@ -10,6 +10,9 @@ import org.javacord.api.interaction.SlashCommandOptionType;
 
 import java.util.List;
 
+/**
+ * Represents the Discord bot that interacts with users
+ */
 public class Bot {
     private final String token;
     private final Deck deck;
@@ -29,6 +32,9 @@ public class Bot {
         return api;
     }
 
+    /**
+     * Starts the Discord bot and initializes Blackjack and Help commands
+     */
     public void run() {
         // Start Discord bot
         api = new DiscordApiBuilder().setToken(token).login().join();
