@@ -19,8 +19,9 @@ token={Discord bot token}
    4. `java -jar blackjackbot-1.0.0.jar`
 
 ## How to Play
-To play Blackjack with the bot, type `/blackjack <bet>` in any channel that the bot is allowed to read and send messages. The bot will give the user basic instructions on how to play.
+To play Blackjack with the bot, type `/blackjack <bet>` in any channel that the bot is allowed to read and send messages.
+Type `/help` for help on how to play Blackjack as well as strategy help.
 
 ## Dependencies
-- Javacord 3.4.0 (https://github.com/Javacord/Javacord)
+- Javacord 3.5.0 (https://github.com/Javacord/Javacord)
 - JSONSimple 1.1.1 (https://github.com/fangyidong/json-simple)

@@ -1,11 +1,11 @@
 package com.github.AndrewAlbizati;
 
 import org.javacord.api.entity.message.Message;
+import org.javacord.api.entity.message.MessageFlag;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import org.javacord.api.interaction.SlashCommandInteraction;
-import org.javacord.api.interaction.callback.InteractionCallbackDataFlag;
 import org.javacord.api.listener.interaction.SlashCommandCreateListener;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -18,11 +18,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 
-public class CommandHandler implements SlashCommandCreateListener {
+public class GameCommandHandler implements SlashCommandCreateListener {
     private final Bot bot;
     public static final HashMap<Long, Game> blackjackGames = new HashMap<>();
 
-    public CommandHandler(Bot bot) {
+    public GameCommandHandler(Bot bot) {
         this.bot = bot;
     }
 
@@ -39,7 +39,7 @@ public class CommandHandler implements SlashCommandCreateListener {
         if (blackjackGames.containsKey(user.getId())) {
             interaction.createImmediateResponder()
                     .setContent("Please finish your previous Blackjack game before starting a new one.")
-                    .setFlags(InteractionCallbackDataFlag.EPHEMERAL)
+                    .setFlags(MessageFlag.EPHEMERAL)
                     .respond();
             return;
         }
@@ -47,7 +47,7 @@ public class CommandHandler implements SlashCommandCreateListener {
         if (interaction.getOptionLongValueByIndex(0).isEmpty()) {
             interaction.createImmediateResponder()
                     .setContent("Please provide a valid bet.")
-                    .setFlags(InteractionCallbackDataFlag.EPHEMERAL)
+                    .setFlags(MessageFlag.EPHEMERAL)
                     .respond();
             return;
         }
@@ -74,7 +74,7 @@ public class CommandHandler implements SlashCommandCreateListener {
         if (game.getBet() < 1) {
             interaction.createImmediateResponder()
                     .setContent("You must bet at least one point.")
-                    .setFlags(InteractionCallbackDataFlag.EPHEMERAL)
+                    .setFlags(MessageFlag.EPHEMERAL)
                     .respond();
             return;
         }
@@ -83,7 +83,7 @@ public class CommandHandler implements SlashCommandCreateListener {
         if (game.getPlayerPointAmount() < game.getBet()) {
             interaction.createImmediateResponder()
                     .setContent("Sorry, you need " + (game.getBet() - game.getPlayerPointAmount()) + " more points.")
-                    .setFlags(InteractionCallbackDataFlag.EPHEMERAL)
+                    .setFlags(MessageFlag.EPHEMERAL)
                     .respond();
             return;
         }

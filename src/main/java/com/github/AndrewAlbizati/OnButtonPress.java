@@ -15,9 +15,9 @@ public class OnButtonPress implements MessageComponentCreateListener {
         Message message = messageComponentInteraction.getMessage();
         Game game = null;
 
-        for (Long userId : CommandHandler.blackjackGames.keySet()) {
-            if (CommandHandler.blackjackGames.get(userId).getMessage().getId() == message.getId()) {
-                game = CommandHandler.blackjackGames.get(userId);
+        for (Long userId : GameCommandHandler.blackjackGames.keySet()) {
+            if (GameCommandHandler.blackjackGames.get(userId).getMessage().getId() == message.getId()) {
+                game = GameCommandHandler.blackjackGames.get(userId);
             }
         }
 
@@ -109,7 +109,7 @@ public class OnButtonPress implements MessageComponentCreateListener {
             endMultiHandGame(game);
         }
 
-        CommandHandler.blackjackGames.remove(game.getUser().getId());
+        GameCommandHandler.blackjackGames.remove(game.getUser().getId());
     }
 
     private void endOneHandGame(Game game) {
@@ -130,7 +130,7 @@ public class OnButtonPress implements MessageComponentCreateListener {
                     .removeAllComponents()
                     .applyChanges();
             game.givePoints(-game.getBet());
-            CommandHandler.blackjackGames.remove(game.getUser().getId());
+            GameCommandHandler.blackjackGames.remove(game.getUser().getId());
             return;
         }
 
@@ -155,7 +155,7 @@ public class OnButtonPress implements MessageComponentCreateListener {
                     .removeAllComponents()
                     .applyChanges();
             game.givePoints(game.getBet());
-            CommandHandler.blackjackGames.remove(game.getUser().getId());
+            GameCommandHandler.blackjackGames.remove(game.getUser().getId());
             return;
         }
 
@@ -222,6 +222,6 @@ public class OnButtonPress implements MessageComponentCreateListener {
                 .setEmbed(eb)
                 .removeAllComponents()
                 .applyChanges();
-        CommandHandler.blackjackGames.remove(game.getUser().getId());
+        GameCommandHandler.blackjackGames.remove(game.getUser().getId());
     }
 }

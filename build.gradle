@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.javacord:javacord:3.4.0'
+    implementation 'org.javacord:javacord:3.5.0'
     implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
 }
 

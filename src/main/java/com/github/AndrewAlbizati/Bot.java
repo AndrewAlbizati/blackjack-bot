@@ -13,6 +13,7 @@ import java.util.List;
 public class Bot {
     private final String token;
     private final Deck deck;
+    private DiscordApi api;
 
     public Bot(String token) {
         this.token = token;
@@ -24,9 +25,13 @@ public class Bot {
         return deck;
     }
 
+    public DiscordApi getApi() {
+        return api;
+    }
+
     public void run() {
         // Start Discord bot
-        DiscordApi api = new DiscordApiBuilder().setToken(token).login().join();
+        api = new DiscordApiBuilder().setToken(token).login().join();
         System.out.println("Logged in as " + api.getYourself().getDiscriminatedName());
 
         // Set bot status
@@ -39,8 +44,11 @@ public class Bot {
                         SlashCommandOption.create(SlashCommandOptionType.LONG, "BET", "Amount of points you wish to bet", true)
                 )).createGlobal(api).join();
 
+        SlashCommand.with("help", "Gives instructions on how to play").createGlobal(api).join();
+
         // Create slash command listener for blackjack
-        api.addSlashCommandCreateListener(new CommandHandler(this));
+        api.addSlashCommandCreateListener(new GameCommandHandler(this));
+        api.addSlashCommandCreateListener(new HelpCommandHandler(this));
         api.addMessageComponentCreateListener(new OnButtonPress());
     }
 }
